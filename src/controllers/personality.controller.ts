@@ -18,7 +18,14 @@ const submit = async (
     answers as Submission[],
     gender as Gender
   )
-  res.json(result)
+  const variantCode =
+    result.variant?.toLowerCase().startsWith("assert") ? "A" : "T"
+
+  res.json({
+    type: `${result.personality}-${variantCode}`,
+    name: result.niceName,
+    ...result,
+  })
 }
 
 export default {

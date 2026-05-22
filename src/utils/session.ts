@@ -4,8 +4,6 @@ import axios from "axios"
 import { wrapper } from "axios-cookiejar-support"
 import { CookieJar } from "tough-cookie"
 
-const jar = new CookieJar()
-
 const defaultHeaders = {
   accept:
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -24,25 +22,28 @@ const defaultHeaders = {
   "upgrade-insecure-requests": "1",
 }
 
-const session = wrapper(
-  axios.create({
-    jar,
-    withCredentials: true,
-    headers: defaultHeaders,
-    baseURL: BASE_URL,
-    proxy: env.USE_PROXY
-      ? {
-          host: env.PROXY_HOST as string,
-          port: env.PROXY_PORT as number,
-          auth: {
-            username: env.PROXY_USERNAME as string,
-            password: env.PROXY_PASSWORD as string,
-          },
-          protocol: "http",
-        }
-      : false,
-  })
-)
+export const createSession = () =>
+  wrapper(
+    axios.create({
+      jar: new CookieJar(),
+      withCredentials: true,
+      headers: defaultHeaders,
+      baseURL: BASE_URL,
+      proxy: env.USE_PROXY
+        ? {
+            host: env.PROXY_HOST as string,
+            port: env.PROXY_PORT as number,
+            auth: {
+              username: env.PROXY_USERNAME as string,
+              password: env.PROXY_PASSWORD as string,
+            },
+            protocol: "http",
+          }
+        : false,
+    })
+  )
+
+const session = createSession()
 
 declare module "axios" {
   interface AxiosRequestConfig {

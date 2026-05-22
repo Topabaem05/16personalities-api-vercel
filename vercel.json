@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm build",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    }
+  ]
+}

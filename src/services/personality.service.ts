@@ -10,8 +10,29 @@ import {
   TraitsResponse,
 } from "@/types"
 import { replaceMap } from "@/utils/replaceMap"
-import session from "@/utils/session"
+import session, { createSession } from "@/utils/session"
 import { HttpError } from "@/utils/httpError"
+
+type PersonalitySession = typeof session
+
+const personalityNames: Record<string, string> = {
+  INTJ: "Architect",
+  INTP: "Logician",
+  ENTJ: "Commander",
+  ENTP: "Debater",
+  INFJ: "Advocate",
+  INFP: "Mediator",
+  ENFJ: "Protagonist",
+  ENFP: "Campaigner",
+  ISTJ: "Logistician",
+  ISFJ: "Defender",
+  ESTJ: "Executive",
+  ESFJ: "Consul",
+  ISTP: "Virtuoso",
+  ISFP: "Adventurer",
+  ESTP: "Entrepreneur",
+  ESFP: "Entertainer",
+}
 
 /**
  * @deprecated
@@ -27,20 +48,26 @@ const startSession = async (ip: string) => {
   return res.data
 }
 
-const getSession = async (): Promise<SessionData> => {
-  const res = await session.get(routes["api.session"])
+const getSession = async (
+  client: PersonalitySession = session
+): Promise<SessionData> => {
+  const res = await client.get(routes["api.session"])
 
   return res.data
 }
 
-const getTraits = async (): Promise<TraitsResponse> => {
-  const res = await session.post(routes["api.profile.traits"], {})
+const getTraits = async (
+  client: PersonalitySession = session
+): Promise<TraitsResponse> => {
+  const res = await client.post(routes["api.profile.traits"], {})
 
   return res.data
 }
 
-const getPersonalityTest = async (): Promise<Array<Question>> => {
-  const res = await session.get(`${BASE_URL}/free-personality-test`)
+const getPersonalityTest = async (
+  client: PersonalitySession = session
+): Promise<Array<Question>> => {
+  const res = await client.get(`${BASE_URL}/free-personality-test`)
   const regex = new RegExp(/:questions="(\[.*?\])"/, "gm")
   const matches = regex.exec(res.data)
 
@@ -65,17 +92,24 @@ const getPersonalityTest = async (): Promise<Array<Question>> => {
     { text: "Agree strongly", value: 3 },
   ]
 
-  return questions.map((question: any) => ({
-    id: Buffer.from(question.text).toString("base64url"),
-    text: question.text,
-    options: defaultOptions,
-  }))
+  return questions.map((question: any) => {
+    const text = typeof question === "string" ? question : question.text
+
+    return {
+      id: Buffer.from(text).toString("base64url"),
+      text,
+      options: defaultOptions,
+    }
+  })
 }
 
 const getTestResults = async (
   submissionData: Submission[],
   gender: Gender
 ): Promise<TestResult> => {
+  const client = createSession()
+  await client.get(`${BASE_URL}/free-personality-test`)
+
   const questions: Array<
     Omit<Submission, "id" | "value"> & { text: string; answer: number }
   > = submissionData.map((s) => ({
@@ -91,16 +125,14 @@ const getTestResults = async (
     inviteCode: "",
   }
 
-  const res = await session.post<GetTestResultsPayload>(
+  const res = await client.post<GetTestResultsPayload>(
     routes["test-results"],
     payload
   )
 
-  await session.post(res.data.redirect, payload)
+  const sess = await getSession(client)
 
-  const sess = await getSession()
-
-  const traitsData = await getTraits()
+  const traitsData = await getTraits(client)
 
   return {
     avatarAlt: sess.user.avatarAlt,
@@ -108,8 +140,11 @@ const getTestResults = async (
     avatarSrcStatic: sess.user.avatarFull,
     personality: sess.user.personality,
     variant: sess.user.variant,
-    niceName: sess.user.localized.niceType,
-    profileUrl: sess.user.localized.profileUrl,
+    niceName:
+      sess.user.localized?.niceType ??
+      personalityNames[sess.user.personality] ??
+      sess.user.personality,
+    profileUrl: sess.user.localized?.profileUrl ?? res.data.redirect,
     traits: traitsData.traits,
     role: sess.user.role,
     strategy: sess.user.strategy,

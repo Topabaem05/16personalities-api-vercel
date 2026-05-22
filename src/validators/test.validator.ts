@@ -8,7 +8,7 @@ const submission = z.object({
       value: z.number(),
     })
   ),
-  gender: z.enum(["Male", "Female", "Other"]),
+  gender: z.enum(["Male", "Female", "Other"]).default("Other"),
 })
 
 export default {

@@ -8,7 +8,10 @@ const envSchema = z
       .default("development"),
 
     PORT: z.coerce.number().default(5000),
-    USE_PROXY: z.enum(["true", "false"]).transform((v) => v === "true"),
+    USE_PROXY: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
     PROXY_HOST: z.string().optional(),
     PROXY_PORT: z.coerce.number().optional(),
     PROXY_USERNAME: z.string().optional(),

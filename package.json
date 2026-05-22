@@ -6,9 +6,9 @@
   "scripts": {
     "env:dev": "dotenv -e .env.dev",
     "env:prod": "dotenv -e .env.prod",
-    "dev": "pnpm run env:dev -- nodemon -r tsconfig-paths/register src/app.ts",
-    "build": "tsc",
-    "start": "pnpm run env:prod -- node -r ts-node/register -r tsconfig-paths/register dist/app.js"
+    "dev": "pnpm run env:dev -- nodemon -r tsconfig-paths/register src/server.ts",
+    "build": "tsc && tsc-alias",
+    "start": "pnpm run env:prod -- node dist/server.js"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -18,6 +18,7 @@
     "@types/tough-cookie": "^4.0.5",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.11",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   },

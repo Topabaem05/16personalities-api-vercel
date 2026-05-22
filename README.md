@@ -9,7 +9,7 @@ This is an unofficial API for the official [16Personalities](https://16personali
 1. **Get All Questions**
 
 ```http
-GET https://16personalities-api.com/api/personality/questions
+GET https://your-vercel-domain.vercel.app/api/questions
 ```
 
 This endpoint returns all the questions that are used to determine the personality type.
@@ -27,10 +27,16 @@ use the `options` array's value as the answer.
 | Agree moderately           | 2     |
 | Agree strongly             | 3     |
 
+The original route is also supported:
+
+```http
+GET https://your-vercel-domain.vercel.app/api/personality/questions
+```
+
 2. **Get Personality Type**
 
 ```http
-POST https://16personalities-api.com/api/personality
+POST https://your-vercel-domain.vercel.app/api/result
 
 {
   "answers": [
@@ -42,13 +48,18 @@ POST https://16personalities-api.com/api/personality
       "id": "...",
       "value": 1
     }
-  ],
-  "gender": "Male"
+  ]
 }
 
 ```
 
-The `gender` field can be `Male`, `Female`, or `Other`.
+The optional `gender` field can be `Male`, `Female`, or `Other`. It defaults to `Other`.
+
+The original route is also supported:
+
+```http
+POST https://your-vercel-domain.vercel.app/api/personality/submit
+```
 
 <br/>
 <!-- Sample response -->
@@ -57,8 +68,11 @@ The response will look like this:
 
 ```json
 {
+  "type": "ISTP-A",
+  "name": "Virtuoso",
   "niceName": "Virtuoso",
-  "fullCode": "ISTP-A",
+  "personality": "ISTP",
+  "variant": "assertive",
   "avatarSrc": "https://www.16personalities.com/static/animations/avatars/all/virtuoso-male.json",
   "avatarAlt": "ISTP avatar",
   "avatarSrcStatic": "https://www.16personalities.com/static/images/personality-types/avatars/istp-virtuoso-male.svg?v=3",
@@ -179,6 +193,67 @@ for development
 ```bash
 pnpm run dev
 ```
+
+# Vercel deployment
+
+This repository includes a Vercel serverless entrypoint at `api/index.js` and `vercel.json`.
+
+Use these Vercel project settings:
+
+```txt
+Framework Preset: Other
+Install Command: pnpm install
+Build Command: pnpm build
+Output Directory: leave empty
+```
+
+No environment variables are required for the default no-proxy deployment. If a proxy is needed, set:
+
+```txt
+USE_PROXY=true
+PROXY_HOST=<host>
+PROXY_PORT=<port>
+PROXY_USERNAME=<username>
+PROXY_PASSWORD=<password>
+```
+
+After deployment, verify:
+
+```bash
+curl https://your-vercel-domain.vercel.app/api/questions
+node - <<'NODE'
+const base = "https://your-vercel-domain.vercel.app"
+
+async function main() {
+  const questions = await fetch(`${base}/api/questions`).then((res) => res.json())
+  const result = await fetch(`${base}/api/result`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      answers: questions.map((question, index) => ({
+        id: question.id,
+        value: index % 2 === 0 ? 2 : -1,
+      })),
+    }),
+  }).then((res) => res.json())
+
+  console.log(result)
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})
+NODE
+```
+
+# Transfer checklist
+
+1. Transfer the GitHub repository or add the recipient as a collaborator.
+2. Invite the recipient to the Vercel project.
+3. Share any Vercel environment variables if proxy mode is enabled.
+4. Transfer any custom domain used by the Vercel project.
+5. Share the production API URL and this README.
 
 ## Note
 
