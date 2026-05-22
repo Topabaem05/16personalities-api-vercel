@@ -11,6 +11,17 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(morgan("dev"))
 
+app.get("/", (req: Request, res: Response) => {
+  res.json({
+    name: "16Personalities API",
+    status: "ok",
+    endpoints: {
+      questions: "GET /api/questions",
+      result: "POST /api/result",
+    },
+  })
+})
+
 app.use("/api", routes)
 
 app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
